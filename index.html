@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LPG 표준밀도 환산기 · KS 보간표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3f1ea;
+    --card:#ffffff;
+    --ink:#1c2a28;
+    --muted:#6d7d79;
+    --faint:#9aa8a4;
+    --line:#e3e0d6;
+    --line-2:#d2cfc3;
+    --teal:#0e6b66;
+    --teal-deep:#0a4f4b;
+    --teal-soft:#e4f0ee;
+    --amber:#c2772a;
+    --amber-soft:#f6e9d8;
+    --red:#c0463f;
+    --red-soft:#f6e0de;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--paper);color:var(--ink);
+    font-family:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100dvh;display:flex;justify-content:center;padding:22px 16px max(28px,env(safe-area-inset-bottom))}
+  .app{width:100%;max-width:460px}
+
+  /* header */
+  header{margin-bottom:18px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);font-weight:500}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:5px 0 4px;line-height:1.15}
+  .tagline{font-size:13px;color:var(--muted);line-height:1.5}
+
+  /* input card */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;box-shadow:0 1px 2px rgba(28,42,40,.04)}
+  .field{padding:6px 2px}
+  .field + .field{margin-top:6px;border-top:1px solid var(--line)}
+  .f-label{display:flex;align-items:baseline;gap:8px;margin-bottom:11px}
+  .f-name{font-size:15px;font-weight:600}
+  .f-range{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);margin-left:auto}
+  .stepper{display:flex;align-items:stretch;gap:10px}
+  .step-btn{flex:none;width:50px;border:1px solid var(--line-2);background:var(--paper);border-radius:12px;
+    font-size:26px;font-weight:500;color:var(--teal);cursor:pointer;line-height:1;transition:.12s;font-family:'IBM Plex Mono',monospace}
+  .step-btn:active{background:var(--teal);color:#fff;transform:scale(.95)}
+  .val-wrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--line-2);border-radius:12px;background:#fcfcfa;transition:border-color .15s}
+  .val-wrap:focus-within{border-color:var(--teal)}
+  .val-input{width:100%;border:none;background:transparent;text-align:center;font-family:'IBM Plex Mono',monospace;
+    font-size:27px;font-weight:600;color:var(--ink);padding:13px 6px;outline:none}
+  .val-unit{position:absolute;right:13px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--faint);pointer-events:none}
+
+  /* result */
+  .result{margin-top:14px;background:var(--teal-deep);border-radius:18px;padding:20px 18px;color:#eafaf8;position:relative;overflow:hidden}
+  .result::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%)}
+  .r-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#7fd6cf}
+  .r-value{font-family:'IBM Plex Mono',monospace;font-size:54px;font-weight:600;line-height:1.05;margin:6px 0 2px;letter-spacing:-.01em}
+  .r-value .unit{font-size:18px;font-weight:400;color:#86cfc8;margin-left:8px}
+  .r-basis{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#a9ddd8}
+  .r-copy{position:absolute;top:16px;right:16px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);
+    color:#dff6f3;font-family:'IBM Plex Mono',monospace;font-size:11px;border-radius:8px;padding:6px 10px;cursor:pointer;transition:.12s;z-index:2}
+  .r-copy:active{background:rgba(255,255,255,.2)}
+  /* error/empty states */
+  .result.warn{background:var(--amber-soft);color:#7a4b16}
+  .result.warn .r-label{color:var(--amber)}
+  .result.warn .r-copy{display:none}
+  .result.err{background:var(--red-soft);color:#7c2c27}
+  .result.err .r-label{color:var(--red)}
+  .result.err .r-copy{display:none}
+  .r-msg{font-size:16px;font-weight:600;line-height:1.4;margin-top:6px}
+
+  /* basis details */
+  details.basis{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  details.basis summary{list-style:none;cursor:pointer;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--teal);
+    display:flex;align-items:center;justify-content:space-between}
+  details.basis summary::-webkit-details-marker{display:none}
+  details.basis summary .chev{transition:transform .2s;font-family:'IBM Plex Mono',monospace}
+  details.basis[open] summary .chev{transform:rotate(90deg)}
+  .basis-body{padding:0 16px 15px;font-size:12.5px;color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:auto auto;gap:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;margin:4px 0 12px}
+  .grid2 .k{color:var(--faint)} .grid2 .v{color:var(--ink);text-align:right}
+  .corner{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .corner th,.corner td{border:1px solid var(--line);padding:7px 8px;text-align:center}
+  .corner th{background:var(--teal-soft);color:var(--teal-deep);font-weight:600}
+  .corner td .lbl{display:block;font-size:9.5px;color:var(--faint)}
+  .basis-note{margin-top:10px;font-size:11.5px;color:var(--faint);line-height:1.5}
+
+  footer{margin-top:16px;font-size:11.5px;color:var(--faint);line-height:1.6;text-align:center}
+  footer b{color:var(--muted);font-weight:600}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="eyebrow">KS 온도–밀도 보간표 · 0–50℃</span>
+    <h1>LPG 표준밀도 환산기</h1>
+    <p class="tagline">측정 온도와 밀도를 넣으면 KS 표를 양선형 보간해 <b>표준상태 환산밀도</b>를 계산합니다.</p>
+  </header>
+
+  <div class="card">
+    <div class="field">
+      <div class="f-label"><span class="f-name">측정 온도</span><span class="f-range" id="tRange">0 ~ 50 ℃</span></div>
+      <div class="stepper">
+        <button class="step-btn" data-act="t-" aria-label="온도 감소">−</button>
+        <div class="val-wrap">
+          <input class="val-input" id="temp" inputmode="decimal" value="25.0" aria-label="측정 온도 (섭씨)">
+          <span class="val-unit">℃</span>
+        </div>
+        <button class="step-btn" data-act="t+" aria-label="온도 증가">+</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="f-label"><span class="f-name">측정 밀도 ρ</span><span class="f-range" id="dRange">0.505 ~ 0.595</span></div>
+      <div class="stepper">
+        <button class="step-btn" data-act="d-" aria-label="밀도 감소">−</button>
+        <div class="val-wrap">
+          <input class="val-input" id="dens" inputmode="decimal" value="0.565" aria-label="측정 밀도">
+          <span class="val-unit">g/cm³</span>
+        </div>
+        <button class="step-btn" data-act="d+" aria-label="밀도 증가">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <button class="r-copy" id="copyBtn">복사</button>
+    <div class="r-label">표준상태 환산밀도</div>
+    <div class="r-value" id="rValue">—</div>
+    <div class="r-basis" id="rBasis"></div>
+    <div class="r-msg" id="rMsg" style="display:none"></div>
+  </div>
+
+  <details class="basis">
+    <summary>계산 근거 보기 <span class="chev">▸</span></summary>
+    <div class="basis-body" id="basisBody">값을 입력하면 보간에 사용된 표 셀이 표시됩니다.</div>
+  </details>
+
+  <footer>
+    <b>입력 범위</b> 온도 0–50℃ · 밀도 0.505–0.595 &nbsp;|&nbsp; KS 표 양선형 보간 (원본 파이썬과 동일 결과)<br>
+    표 가장자리의 빈 구간은 환산값이 없을 수 있습니다 · 참고용
+  </footer>
+</div>
+
+<script>
+const KS = {"temps":[0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.5,16.0,16.5,17.0,17.5,18.0,18.5,19.0,19.5,20.0,20.5,21.0,21.5,22.0,22.5,23.0,23.5,24.0,24.5,25.0,25.5,26.0,26.5,27.0,27.5,28.0,28.5,29.0,29.5,30.0,30.5,31.0,31.5,32.0,32.5,33.0,33.5,34.0,34.5,35.0,35.5,36.0,36.5,37.0,37.5,38.0,38.5,39.0,39.5,40.0,40.5,41.0,41.5,42.0,42.5,43.0,43.5,44.0,44.5,45.0,45.5,46.0,46.5,47.0,47.5,48.0,48.5,49.0,49.5,50.0],"densities":[0.505,0.51,0.515,0.52,0.525,0.53,0.535,0.54,0.545,0.55,0.555,0.56,0.565,0.57,0.575,0.58,0.585,0.59,0.595],"grid":[[null,0.487,0.492,0.498,0.503,0.509,0.514,0.52,0.525,0.531,0.536,0.541,0.547,0.552,0.557,0.562,0.568,0.573,0.597],[null,0.488,0.493,0.499,0.504,0.51,0.515,0.521,0.526,0.532,0.537,0.542,0.548,0.553,0.558,0.563,0.569,0.574,0.58],[null,0.489,0.494,0.5,0.505,0.51,0.515,0.521,0.526,0.532,0.537,0.542,0.548,0.553,0.558,0.563,0.569,0.574,0.58],[null,0.489,0.494,0.5,0.505,0.511,0.516,0.522,0.527,0.533,0.538,0.543,0.549,0.554,0.559,0.564,0.57,0.575,0.581],[null,0.49,0.495,0.501,0.506,0.512,0.517,0.523,0.528,0.533,0.538,0.543,0.549,0.554,0.559,0.564,0.57,0.575,0.581],[null,0.491,0.496,0.502,0.507,0.513,0.518,0.524,0.529,0.534,0.539,0.544,0.55,0.555,0.56,0.565,0.571,0.576,0.582],[null,0.492,0.497,0.503,0.508,0.513,0.518,0.524,0.529,0.535,0.54,0.545,0.551,0.556,0.561,0.566,0.572,0.577,0.582],[null,0.493,0.498,0.504,0.509,0.514,0.519,0.525,0.53,0.535,0.54,0.545,0.551,0.556,0.561,0.566,0.572,0.577,0.583],[null,0.493,0.498,0.504,0.509,0.515,0.52,0.526,0.531,0.536,0.541,0.546,0.552,0.557,0.562,0.567,0.573,0.578,0.583],[null,0.494,0.499,0.505,0.51,0.515,0.52,0.526,0.531,0.536,0.541,0.546,0.552,0.557,0.562,0.567,0.573,0.578,0.584],[0.49,0.495,0.5,0.506,0.511,0.516,0.521,0.527,0.532,0.537,0.542,0.547,0.553,0.558,0.563,0.568,0.574,0.579,0.584],[0.491,0.496,0.501,0.507,0.512,0.517,0.521,0.528,0.533,0.538,0.543,0.548,0.554,0.559,0.564,0.569,0.575,0.58,0.585],[0.491,0.497,0.502,0.507,0.512,0.517,0.522,0.528,0.533,0.538,0.543,0.548,0.554,0.559,0.564,0.569,0.575,0.58,0.585],[0.492,0.497,0.502,0.508,0.513,0.518,0.523,0.529,0.534,0.539,0.544,0.549,0.555,0.56,0.565,0.57,0.576,0.581,0.586],[0.493,0.498,0.503,0.509,0.514,0.519,0.524,0.529,0.534,0.54,0.545,0.55,0.555,0.56,0.565,0.571,0.576,0.581,0.586],[0.494,0.499,0.504,0.51,0.515,0.52,0.525,0.53,0.535,0.541,0.546,0.551,0.556,0.561,0.566,0.572,0.577,0.582,0.587],[0.494,0.5,0.505,0.51,0.515,0.52,0.525,0.531,0.536,0.541,0.546,0.551,0.557,0.562,0.567,0.572,0.578,0.583,0.588],[0.495,0.501,0.506,0.511,0.516,0.521,0.526,0.531,0.536,0.542,0.547,0.552,0.557,0.562,0.567,0.573,0.578,0.583,0.588],[0.496,0.501,0.506,0.512,0.517,0.522,0.527,0.532,0.537,0.543,0.548,0.553,0.558,0.563,0.568,0.574,0.579,0.584,0.589],[0.496,0.502,0.507,0.512,0.517,0.522,0.527,0.532,0.537,0.543,0.548,0.553,0.558,0.563,0.568,0.574,0.579,0.584,0.589],[0.497,0.503,0.508,0.513,0.518,0.523,0.528,0.533,0.538,0.544,0.549,0.554,0.559,0.564,0.569,0.575,0.58,0.585,0.59],[0.498,0.504,0.509,0.514,0.519,0.523,0.529,0.534,0.539,0.545,0.55,0.555,0.56,0.565,0.57,0.576,0.581,0.586,0.591],[0.499,0.504,0.509,0.514,0.519,0.524,0.529,0.534,0.539,0.545,0.55,0.555,0.56,0.565,0.57,0.576,0.581,0.586,0.591],[0.499,0.505,0.51,0.515,0.52,0.525,0.53,0.535,0.54,0.546,0.551,0.556,0.561,0.566,0.571,0.577,0.582,0.587,0.592],[0.5,0.506,0.511,0.516,0.521,0.526,0.531,0.536,0.541,0.546,0.551,0.556,0.561,0.566,0.571,0.577,0.582,0.587,0.592],[0.501,0.507,0.512,0.517,0.522,0.527,0.532,0.537,0.542,0.547,0.552,0.557,0.562,0.567,0.572,0.578,0.583,0.588,0.593],[0.502,0.507,0.512,0.517,0.522,0.527,0.532,0.537,0.542,0.548,0.553,0.558,0.563,0.568,0.573,0.578,0.583,0.588,0.593],[0.503,0.508,0.513,0.518,0.523,0.528,0.533,0.538,0.543,0.548,0.553,0.558,0.563,0.568,0.573,0.579,0.584,0.589,0.594],[0.503,0.509,0.514,0.519,0.524,0.529,0.534,0.539,0.544,0.549,0.554,0.559,0.564,0.569,0.574,0.579,0.584,0.589,0.594],[0.504,0.509,0.514,0.519,0.524,0.529,0.534,0.539,0.544,0.549,0.554,0.559,0.564,0.569,0.574,0.58,0.585,0.59,0.595],[0.505,0.51,0.515,0.52,0.525,0.53,0.535,0.54,0.545,0.55,0.555,0.56,0.565,0.57,0.575,0.58,0.585,0.59,0.595],[0.506,0.511,0.516,0.521,0.526,0.531,0.536,0.541,0.546,0.551,0.556,0.561,0.566,0.571,0.576,0.581,0.586,0.591,0.596],[0.507,0.512,0.516,0.521,0.526,0.531,0.536,0.541,0.546,0.551,0.556,0.566,0.566,0.571,0.576,0.581,0.586,0.591,0.596],[0.507,0.512,0.517,0.522,0.527,0.532,0.537,0.542,0.547,0.552,0.557,0.567,0.567,0.572,0.577,0.582,0.587,0.592,0.597],[0.508,0.513,0.518,0.523,0.528,0.533,0.538,0.543,0.548,0.553,0.557,0.567,0.567,0.572,0.577,0.582,0.587,0.592,0.597],[0.509,0.514,0.519,0.524,0.529,0.534,0.539,0.544,0.549,0.554,0.558,0.568,0.568,0.573,0.578,0.583,0.588,0.593,0.598],[0.51,0.515,0.519,0.524,0.529,0.534,0.539,0.544,0.549,0.554,0.559,0.569,0.569,0.574,0.579,0.584,0.589,0.594,0.598],[0.511,0.516,0.52,0.525,0.53,0.535,0.54,0.545,0.55,0.555,0.559,0.569,0.569,0.574,0.579,0.584,0.589,0.594,0.599],[0.511,0.516,0.521,0.526,0.531,0.536,0.541,0.546,0.551,0.556,0.56,0.57,0.57,0.575,0.58,0.585,0.59,0.595,0.599],[0.512,0.517,0.521,0.526,0.531,0.536,0.541,0.546,0.551,0.557,0.56,0.57,0.57,0.575,0.58,0.585,0.59,0.595,0.6],[0.513,0.518,0.522,0.527,0.532,0.537,0.542,0.547,0.552,0.558,0.561,0.571,0.571,0.576,0.581,0.586,0.591,0.596,0.6],[0.514,0.519,0.523,0.528,0.533,0.538,0.543,0.548,0.553,0.558,0.562,0.572,0.572,0.577,0.582,0.587,0.592,0.597,0.601],[0.514,0.519,0.523,0.528,0.533,0.538,0.543,0.548,0.553,0.559,0.562,0.572,0.572,0.577,0.582,0.587,0.592,0.597,0.601],[0.515,0.52,0.524,0.529,0.534,0.539,0.544,0.549,0.554,0.559,0.563,0.573,0.573,0.578,0.583,0.588,0.593,0.598,0.602],[0.516,0.52,0.525,0.53,0.535,0.54,0.544,0.549,0.554,0.559,0.63,0.573,0.573,0.578,0.583,0.588,0.593,0.598,0.602],[0.517,0.521,0.526,0.531,0.536,0.541,0.545,0.55,0.555,0.56,0.564,0.574,0.574,0.579,0.584,0.589,0.594,0.599,0.603],[0.517,0.522,0.526,0.531,0.536,0.541,0.546,0.551,0.556,0.561,0.565,0.575,0.575,0.58,0.585,0.59,0.594,0.599,0.603],[0.518,0.522,0.527,0.532,0.537,0.542,0.546,0.551,0.556,0.561,0.565,0.575,0.575,0.58,0.585,0.59,0.595,0.6,0.604],[0.519,0.523,0.528,0.533,0.538,0.543,0.547,0.552,0.557,0.562,0.566,0.576,0.576,0.581,0.586,0.591,0.595,0.6,0.604],[0.519,0.523,0.528,0.533,0.538,0.543,0.547,0.552,0.557,0.562,0.566,0.576,0.576,0.581,0.586,0.591,0.596,0.601,0.605],[0.52,0.524,0.529,0.534,0.539,0.544,0.548,0.553,0.558,0.563,0.567,0.572,0.577,0.582,0.587,0.592,0.596,0.601,0.605],[0.521,0.525,0.53,0.535,0.54,0.545,0.549,0.554,0.558,0.563,0.568,0.573,0.578,0.583,0.588,0.593,0.597,0.602,0.606],[0.521,0.525,0.53,0.535,0.54,0.545,0.549,0.554,0.559,0.564,0.568,0.573,0.578,0.583,0.588,0.593,0.597,0.602,0.606],[0.522,0.526,0.531,0.536,0.541,0.546,0.55,0.555,0.559,0.564,0.569,0.574,0.579,0.584,0.589,0.594,0.598,0.603,0.607],[0.523,0.527,0.532,0.537,0.541,0.546,0.55,0.555,0.56,0.565,0.569,0.574,0.579,0.584,0.589,0.594,0.598,0.603,0.607],[0.524,0.528,0.533,0.538,0.542,0.547,0.551,0.556,0.56,0.566,0.57,0.575,0.58,0.585,0.59,0.595,0.599,0.604,0.608],[0.524,0.528,0.533,0.538,0.543,0.548,0.552,0.557,0.561,0.567,0.571,0.576,0.581,0.585,0.59,0.595,0.6,0.604,0.609],[0.525,0.529,0.534,0.539,0.543,0.548,0.552,0.557,0.562,0.567,0.571,0.576,0.581,0.586,0.591,0.596,0.6,0.605,0.609],[0.526,0.53,0.535,0.54,0.544,0.549,0.553,0.558,0.562,0.568,0.572,0.577,0.582,0.586,0.591,0.596,0.601,0.605,0.61],[0.526,0.53,0.535,0.54,0.544,0.549,0.553,0.558,0.563,0.568,0.572,0.577,0.582,0.587,0.592,0.597,0.601,0.606,0.61],[0.527,0.531,0.536,0.541,0.545,0.55,0.554,0.559,0.564,0.569,0.573,0.578,0.583,0.587,0.592,0.597,0.602,0.606,0.611],[0.528,0.532,0.537,0.542,0.546,0.551,0.555,0.56,0.565,0.57,0.574,0.579,0.584,0.588,0.593,0.598,0.603,0.606,0.611],[0.528,0.532,0.537,0.542,0.546,0.551,0.555,0.56,0.565,0.57,0.574,0.579,0.584,0.588,0.593,0.598,0.603,0.607,0.612],[0.529,0.533,0.538,0.543,0.547,0.552,0.556,0.561,0.566,0.571,0.575,0.58,0.585,0.589,0.594,0.599,0.604,0.607,0.612],[0.529,0.534,0.538,0.543,0.547,0.552,0.557,0.561,0.566,0.571,0.575,0.58,0.585,0.589,0.594,0.599,0.604,0.608,0.613],[0.53,0.535,0.539,0.544,0.548,0.553,0.558,0.562,0.567,0.572,0.576,0.581,0.586,0.59,0.595,0.6,0.605,0.608,0.613],[0.531,0.535,0.54,0.545,0.549,0.554,0.558,0.563,0.567,0.572,0.577,0.582,0.586,0.591,0.595,0.6,0.605,0.608,0.613],[0.531,0.536,0.54,0.545,0.549,0.554,0.559,0.563,0.568,0.573,0.577,0.582,0.587,0.591,0.596,0.601,0.606,0.609,0.614],[0.532,0.537,0.541,0.546,0.55,0.555,0.56,0.564,0.568,0.573,0.578,0.583,0.587,0.592,0.596,0.601,0.606,0.609,0.614],[0.532,0.537,0.541,0.546,0.55,0.555,0.56,0.564,0.569,0.574,0.578,0.583,0.588,0.592,0.597,0.602,0.607,0.61,0.615],[0.533,0.538,0.542,0.547,0.551,0.556,0.561,0.565,0.569,0.574,0.579,0.584,0.588,0.593,0.597,0.602,0.607,0.61,0.615],[0.534,0.539,0.543,0.548,0.552,0.557,0.562,0.566,0.57,0.575,0.58,0.585,0.589,0.594,0.598,0.603,0.608,0.611,0.616],[0.534,0.539,0.543,0.548,0.552,0.557,0.562,0.566,0.57,0.575,0.58,0.585,0.589,0.594,0.598,0.603,0.608,0.611,0.616],[0.565,0.54,0.544,0.549,0.553,0.558,0.563,0.567,0.571,0.576,0.581,0.586,0.59,0.595,0.599,0.604,0.609,0.612,0.617],[0.536,0.54,0.544,0.549,0.553,0.558,0.563,0.567,0.571,0.576,0.581,0.586,0.59,0.595,0.599,0.604,0.609,0.612,0.617],[0.537,0.541,0.565,0.55,0.554,0.559,0.564,0.568,0.572,0.577,0.582,0.587,0.591,0.596,0.6,0.605,0.61,0.613,0.618],[0.537,0.542,0.546,0.551,0.555,0.53,0.564,0.569,0.573,0.578,0.582,0.587,0.591,0.596,0.601,0.605,0.61,0.614,0.619],[0.538,0.542,0.546,0.551,0.555,0.56,0.565,0.569,0.573,0.578,0.583,0.588,0.592,0.597,0.601,0.606,0.611,0.614,0.619],[0.538,0.543,0.547,0.552,0.556,0.561,0.565,0.57,0.574,0.579,0.583,0.588,0.592,0.597,0.602,0.606,0.611,0.615,0.62],[0.539,0.543,0.547,0.552,0.556,0.561,0.566,0.57,0.574,0.579,0.584,0.589,0.593,0.598,0.602,0.607,0.612,0.615,0.62],[0.54,0.544,0.548,0.553,0.557,0.562,0.566,0.571,0.575,0.58,0.584,0.589,0.593,0.598,0.603,0.607,0.612,0.616,0.621],[0.541,0.545,0.549,0.554,0.558,0.563,0.567,0.572,0.576,0.581,0.585,0.59,0.594,null,null,null,null,null,null],[0.541,0.545,0.549,0.554,0.558,0.563,0.567,0.572,0.576,0.581,0.585,0.59,0.594,null,null,null,null,null,null],[0.542,0.546,0.55,0.555,0.559,0.564,0.568,0.573,0.577,0.582,0.586,0.591,0.595,null,null,null,null,null,null],[0.542,0.546,0.55,0.555,0.559,0.564,0.568,0.573,0.577,0.582,0.586,0.591,0.595,null,null,null,null,null,null],[0.543,0.547,0.551,0.556,0.56,0.565,0.569,0.574,0.578,0.583,0.587,0.592,0.596,null,null,null,null,null,null],[0.544,0.548,0.552,0.557,0.561,0.565,0.57,0.574,0.579,0.583,0.587,0.592,0.596,null,null,null,null,null,null],[0.544,0.548,0.552,0.557,0.561,0.566,0.57,0.575,0.579,0.584,0.588,0.593,0.597,null,null,null,null,null,null],[0.545,0.549,0.553,0.558,0.562,0.566,0.571,0.575,0.58,0.584,0.588,0.593,0.597,null,null,null,null,null,null],[0.545,0.549,0.553,0.558,0.562,0.567,0.571,0.576,0.58,0.585,0.589,0.594,0.598,null,null,null,null,null,null],[0.546,0.55,0.554,0.559,0.563,0.567,0.572,0.576,0.581,0.585,0.589,0.594,0.598,null,null,null,null,null,null],[0.547,0.551,0.555,0.56,0.564,0.568,0.573,0.577,0.582,0.586,0.59,0.595,0.599,null,null,null,null,null,null],[0.547,0.551,0.555,0.56,0.564,0.568,0.573,0.577,0.582,0.586,0.59,0.595,0.599,null,null,null,null,null,null],[0.548,0.552,0.556,0.561,0.565,0.569,0.574,0.578,0.583,0.587,0.591,0.596,0.6,null,null,null,null,null,null],[0.548,0.552,0.557,0.561,0.565,0.569,0.574,0.578,0.583,0.587,0.591,0.596,0.601,null,null,null,null,null,null],[0.549,0.553,0.558,0.562,0.566,0.57,0.575,0.579,0.584,0.588,0.592,0.597,0.602,null,null,null,null,null,null],[0.55,0.554,0.558,0.536,0.567,0.571,0.576,0.58,0.585,0.589,0.593,0.598,0.602,null,null,null,null,null,null],[0.55,0.554,0.559,0.563,0.567,0.571,0.576,0.58,0.585,0.589,0.593,0.598,0.603,null,null,null,null,null,null],[0.551,0.355,0.56,0.564,0.568,0.572,0.577,0.581,0.586,0.59,0.594,0.599,0.604,null,null,null,null,null,null],[0.551,0.555,0.56,0.564,0.568,0.572,0.577,0.581,0.586,0.59,0.594,0.599,0.604,null,null,null,null,null,null],[0.552,0.556,0.561,0.565,0.569,0.573,0.578,0.582,0.587,0.591,0.595,0.6,0.605,null,null,null,null,null,null]]};
+
+/* ---- interpolation (mirror of the Python KSTable) ---- */
+function findBrackets(arr,x){
+  if(x < arr[0]-1e-9 || x > arr[arr.length-1]+1e-9) throw {type:'range',min:arr[0],max:arr[arr.length-1]};
+  let lo=0,hi=arr.length-1;
+  while(lo<=hi){const mid=(lo+hi)>>1;
+    if(Math.abs(arr[mid]-x)<1e-9) return [mid,mid];
+    if(arr[mid]<x) lo=mid+1; else hi=mid-1;}
+  return [Math.max(0,lo-1),lo];
+}
+function lerp(x0,x1,y0,y1,x){ if(Math.abs(x1-x0)<1e-12) return y0; return y0+(y1-y0)*(x-x0)/(x1-x0); }
+function interpolate(tc,md){
+  const T=KS.temps,D=KS.densities,G=KS.grid;
+  const [t0,t1]=findBrackets(T,tc), [d0,d1]=findBrackets(D,md);
+  const T0=T[t0],T1=T[t1],D0=D[d0],D1=D[d1];
+  const Q11=G[t0][d0],Q12=G[t0][d1],Q21=G[t1][d0],Q22=G[t1][d1];
+  if([Q11,Q12,Q21,Q22].some(v=>v==null)) throw {type:'empty',T0,T1,D0,D1};
+  let R1,R2,val;
+  if(Math.abs(T1-T0)<1e-12){ R1=lerp(D0,D1,Q11,Q12,md); R2=R1; val=R1; }
+  else { R1=lerp(D0,D1,Q11,Q12,md); R2=lerp(D0,D1,Q21,Q22,md); val=lerp(T0,T1,R1,R2,tc); }
+  return {val,T0,T1,D0,D1,Q11,Q12,Q21,Q22,R1,R2};
+}
+
+/* ---- UI ---- */
+const tempEl=document.getElementById('temp'), densEl=document.getElementById('dens');
+const result=document.getElementById('result'), rValue=document.getElementById('rValue'),
+      rBasis=document.getElementById('rBasis'), rMsg=document.getElementById('rMsg'),
+      basisBody=document.getElementById('basisBody'), copyBtn=document.getElementById('copyBtn');
+let lastVal=null, lastInputs=null;
+
+const fmtT=v=>(Math.round(v*10)/10).toFixed(1);
+const fmtD=v=>(Math.round(v*1000)/1000).toFixed(3);
+
+function setState(cls){ result.className='result'+(cls?' '+cls:''); }
+function showNumber(r,tc,md){
+  setState('');
+  rValue.style.display=''; rMsg.style.display='none';
+  rValue.innerHTML = fmtD(r.val) + '<span class="unit">g/cm³</span>';
+  rBasis.textContent = `${fmtT(tc)}℃ · ρ ${fmtD(md)} 기준`;
+  lastVal=fmtD(r.val); lastInputs=`${fmtT(tc)}℃, ρ${fmtD(md)}`;
+  renderBasis(r,tc,md);
+}
+function showMsg(kind,msg){
+  setState(kind);
+  rValue.style.display='none'; rMsg.style.display=''; rBasis.textContent='';
+  rMsg.textContent=msg; lastVal=null;
+}
+function renderBasis(r,tc,md){
+  basisBody.innerHTML=`
+    <div class="grid2">
+      <span class="k">온도 구간 T₀ ~ T₁</span><span class="v">${fmtT(r.T0)} ~ ${fmtT(r.T1)} ℃</span>
+      <span class="k">밀도 구간 ρ₀ ~ ρ₁</span><span class="v">${fmtD(r.D0)} ~ ${fmtD(r.D1)}</span>
+      <span class="k">밀도 보간 @T₀ (R1)</span><span class="v">${r.R1.toFixed(4)}</span>
+      <span class="k">밀도 보간 @T₁ (R2)</span><span class="v">${r.R2.toFixed(4)}</span>
+    </div>
+    <table class="corner">
+      <tr><th></th><th>ρ ${fmtD(r.D0)}</th><th>ρ ${fmtD(r.D1)}</th></tr>
+      <tr><th>${fmtT(r.T0)}℃</th><td><span class="lbl">Q11</span>${r.Q11.toFixed(3)}</td><td><span class="lbl">Q12</span>${r.Q12.toFixed(3)}</td></tr>
+      <tr><th>${fmtT(r.T1)}℃</th><td><span class="lbl">Q21</span>${r.Q21.toFixed(3)}</td><td><span class="lbl">Q22</span>${r.Q22.toFixed(3)}</td></tr>
+    </table>
+    <p class="basis-note">표의 네 모서리값(Q)을 밀도 방향으로 먼저, 그다음 온도 방향으로 선형보간(양선형)합니다. 입력이 표의 격자점과 정확히 같으면 해당 값을 그대로 사용합니다.</p>`;
+}
+
+function compute(){
+  const tc=parseFloat(tempEl.value), md=parseFloat(densEl.value);
+  if(tempEl.value.trim()===''||densEl.value.trim()===''||isNaN(tc)||isNaN(md)){
+    showMsg('warn','온도와 밀도를 입력하세요'); basisBody.textContent='값을 입력하면 보간에 사용된 표 셀이 표시됩니다.'; return;
+  }
+  try{
+    const r=interpolate(tc,md); showNumber(r,tc,md);
+  }catch(e){
+    if(e.type==='range'){
+      const which = (tc<KS.temps[0]||tc>KS.temps[KS.temps.length-1]) ? '온도' : '밀도';
+      showMsg('warn', `${which} 값이 표 범위를 벗어났습니다 · 온도 0~50℃, 밀도 0.505~0.595`);
+    }else if(e.type==='empty'){
+      showMsg('err', `이 구간(${fmtT(e.T0)}~${fmtT(e.T1)}℃ · ρ${fmtD(e.D0)}~${fmtD(e.D1)})은 KS 표에 값이 없습니다`);
+    }else{ showMsg('err','계산 오류'); }
+    basisBody.textContent='해당 구간은 표시할 수 없습니다.';
+  }
+}
+
+/* steppers */
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+document.querySelector('.card').addEventListener('click',e=>{
+  const b=e.target.closest('.step-btn'); if(!b)return;
+  const act=b.dataset.act;
+  if(act[0]==='t'){
+    let v=parseFloat(tempEl.value); if(isNaN(v))v=25;
+    v=clamp(v+(act==='t+'?0.5:-0.5), 0, 50); tempEl.value=fmtT(v);
+  }else{
+    let v=parseFloat(densEl.value); if(isNaN(v))v=0.565;
+    v=clamp(v+(act==='d+'?0.005:-0.005), 0.505, 0.595); densEl.value=fmtD(v);
+  }
+  compute();
+});
+tempEl.addEventListener('input',compute);
+densEl.addEventListener('input',compute);
+tempEl.addEventListener('blur',()=>{ if(tempEl.value.trim()!==''&&!isNaN(parseFloat(tempEl.value))) tempEl.value=fmtT(parseFloat(tempEl.value)); });
+densEl.addEventListener('blur',()=>{ if(densEl.value.trim()!==''&&!isNaN(parseFloat(densEl.value))) densEl.value=fmtD(parseFloat(densEl.value)); });
+
+copyBtn.addEventListener('click',async()=>{
+  if(lastVal==null)return;
+  const txt=`표준밀도 ${lastVal} g/cm³ (${lastInputs})`;
+  try{ await navigator.clipboard.writeText(txt); copyBtn.textContent='복사됨 ✓'; setTimeout(()=>copyBtn.textContent='복사',1200);}catch(e){ copyBtn.textContent='복사 실패';}
+});
+
+compute();
+</script>
+</body>
+</html>
